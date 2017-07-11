@@ -50,6 +50,7 @@
 #include "Mixer/MixerLine.h"
 #include "UndoActions.h"
 
+#include "widgets/InfoBar.h"
 
 
 #include <QtGui>
@@ -111,7 +112,7 @@ HydrogenApp::HydrogenApp( MainForm *pMainForm, Song *pFirstSong )
 	else {
 		m_pAudioEngineInfoForm->hide();
 	}
-	
+
 	m_pPlaylistDialog = new PlaylistDialog( 0 );
 	m_pDirector = new Director( 0 );
 }
@@ -149,7 +150,7 @@ HydrogenApp::~HydrogenApp()
 		delete m_pLadspaFXProperties[nFX];
 	}
 	#endif
-	
+
 }
 
 
@@ -226,9 +227,14 @@ void HydrogenApp::setupSinglePanedInterface()
 
 	// LAYOUT!!
 	QVBoxLayout *pMainVBox = new QVBoxLayout();
-	pMainVBox->setSpacing( 5 );
+	pMainVBox->setSpacing( 1 );
 	pMainVBox->setMargin( 0 );
 	pMainVBox->addWidget( m_pPlayerControl );
+
+	m_pInfoBar = new InfoBar();
+	m_pInfoBar->hide();
+	pMainVBox->addWidget( m_pInfoBar );
+	pMainVBox->addSpacing( 3 );
 
 	if( uiLayout == Preferences::UI_LAYOUT_SINGLE_PANE)
 		pMainVBox->addWidget( pSplitter );
@@ -335,6 +341,8 @@ void HydrogenApp::showMixer(bool show)
 	} else {
 		m_pMixer->setVisible( show );
 	}
+
+	m_pMainForm->update_mixer_checkbox();
 }
 
 void HydrogenApp::showInstrumentPanel(bool show)
@@ -354,6 +362,7 @@ void HydrogenApp::showInstrumentPanel(bool show)
 	} else {
 		getInstrumentRack()->setHidden( show );
 	}
+		m_pMainForm->update_instrument_checkbox( !show );
 }
 
 
@@ -411,15 +420,23 @@ void HydrogenApp::showAudioEngineInfoForm()
 
 void HydrogenApp::showPlaylistDialog()
 {
-	m_pPlaylistDialog->hide();
-	m_pPlaylistDialog->show();
+	if ( m_pPlaylistDialog->isVisible() ) {
+		m_pPlaylistDialog->hide();
+	} else {
+		m_pPlaylistDialog->show();
+	}
+	m_pMainForm->update_playlist_checkbox();
 }
 
 
 void HydrogenApp::showDirector()
 {
-	m_pDirector->hide();
-	m_pDirector->show();
+	if ( m_pDirector->isVisible() ) {
+		m_pDirector->hide();
+	} else {
+		m_pDirector->show();
+	}
+	m_pMainForm->update_director_checkbox();
 }
 
 
@@ -531,7 +548,7 @@ void HydrogenApp::onEventQueueTimer()
 			case EVENT_UNDO_REDO:
 				pListener->undoRedoActionEvent( event.value );
 				break;
-				
+
 			case EVENT_TEMPO_CHANGED:
 				pListener->tempoChangedEvent( event.value );
 				break;
@@ -612,4 +629,3 @@ void HydrogenApp::cleanupTemporaryFiles()
 
 	Filesystem::rm( Preferences::get_instance()->getTmpDirectory() );
 }
-

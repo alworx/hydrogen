@@ -1,6 +1,6 @@
 /*
  * Hydrogen
- * Copyright(c) 2002-2008 by Alex >Comix< Cominu [comix@users.sourceforge.net]
+ * Copyright(c) 2002-2016 by the Hydrogen Team 
  *
  * http://www.hydrogen-music.org
  *
@@ -20,35 +20,40 @@
  *
  */
 
-#ifndef H2_MIDI_OUTPUT_H
-#define H2_MIDI_OUTPUT_H
+#ifndef INFOBAR_H
+#define INFOBAR_H
 
-#include <hydrogen/object.h>
-#include <string>
+#include <QWidget>
 #include <vector>
-#include "MidiCommon.h"
 
-namespace H2Core
+class QHBoxLayout;
+class QLabel;
+class QPushButton;
+
+class InfoBar : public QWidget
 {
-class Note;
+	QHBoxLayout *m_pLayout;
+	QLabel *m_pLabel;
 
+	QString m_sTitle;
+	QString m_sText;
 
-/**
- * MIDI input base class
- */
-class MidiOutput : public virtual Object
-{
-public:
-	MidiOutput( const char* class_name );
-	virtual ~MidiOutput();
+	std::vector<QPushButton *> m_buttons;
 
-	virtual void handleQueueNote(Note* pNote) = 0;
-	virtual void handleQueueNoteOff( int channel, int key, int velocity ) = 0;
-	virtual void handleQueueAllNoteOff() = 0;
-	virtual void handleOutgoingControlChange( int param, int value, int channel ) = 0;
-};
+	public:
+	InfoBar(QWidget *parent = Q_NULLPTR);
+	void setTitle(const QString &text);
+	void setText(const QString &text);
+	QPushButton *addButton( const QString &label );
+	void reset();
 
+	private:
+	void setBackgroundColor();
+	void createLayout();
+	void createIcon();
+	void createLabel();
+	void createCloseButton();
+	void updateText();
 };
 
 #endif
-

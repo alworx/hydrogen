@@ -60,10 +60,11 @@ class InstrumentRack;
 class PlaylistDialog;
 class SampleEditor;
 class Director;
+class InfoBar;
 
 class HydrogenApp : public QObject, public H2Core::Object
 {
-    H2_OBJECT
+		H2_OBJECT
 	Q_OBJECT
 	public:
 		HydrogenApp( MainForm* pMainForm, H2Core::Song *pFirstSong );
@@ -76,6 +77,7 @@ class HydrogenApp : public QObject, public H2Core::Object
 		void setSong( H2Core::Song* pSong );
 
 		void showPreferencesDialog();
+		void updateMixerCheckbox();
 		void showMixer(bool bShow);
 		void showInstrumentPanel(bool);
 		void showAudioEngineInfoForm();
@@ -94,6 +96,7 @@ class HydrogenApp : public QObject, public H2Core::Object
 		PatternEditorPanel* getPatternEditorPanel() {	return m_pPatternEditorPanel;	}
 		PlayerControl* getPlayerControl() {	return m_pPlayerControl;	}
 		InstrumentRack* getInstrumentRack(){	return m_pInstrumentRack;	}
+		InfoBar *getInfoBar() const { return m_pInfoBar; }
 
 		QUndoStack*  m_undoStack;
 		QTabWidget *pTab;
@@ -140,6 +143,7 @@ class HydrogenApp : public QObject, public H2Core::Object
 		PlayerControl *m_pPlayerControl;
 		PlaylistDialog *m_pPlaylistDialog;
 		SampleEditor *m_pSampleEditor;
+		InfoBar *m_pInfoBar;
 		Director *m_pDirector;
 		QTimer *m_pEventQueueTimer;
 		std::vector<EventListener*> m_eventListeners;

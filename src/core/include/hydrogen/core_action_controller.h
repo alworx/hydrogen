@@ -1,6 +1,6 @@
 /*
  * Hydrogen
- * Copyright(c) 2002-2008 by Alex >Comix< Cominu [comix@users.sourceforge.net]
+ * Copyright(c) 2017 by Sebastian Moors
  *
  * http://www.hydrogen-music.org
  *
@@ -20,35 +20,32 @@
  *
  */
 
-#ifndef H2_MIDI_OUTPUT_H
-#define H2_MIDI_OUTPUT_H
+#ifndef CORE_ACTION_CONTROLLER_H
+#define CORE_ACTION_CONTROLLER_H
 
 #include <hydrogen/object.h>
-#include <string>
-#include <vector>
-#include "MidiCommon.h"
 
 namespace H2Core
 {
-class Note;
 
-
-/**
- * MIDI input base class
- */
-class MidiOutput : public virtual Object
-{
-public:
-	MidiOutput( const char* class_name );
-	virtual ~MidiOutput();
-
-	virtual void handleQueueNote(Note* pNote) = 0;
-	virtual void handleQueueNoteOff( int channel, int key, int velocity ) = 0;
-	virtual void handleQueueAllNoteOff() = 0;
-	virtual void handleOutgoingControlChange( int param, int value, int channel ) = 0;
+class CoreActionController : public H2Core::Object {
+	H2_OBJECT
+	
+	public:
+		CoreActionController();
+		~CoreActionController();
+	
+		void setMasterVolume( float masterVolumeValue );
+		void setStripVolume( int nStrip, float masterVolumeValue );
+		void setStripPan( int nStrip, float panValue );
+		void setMetronomeIsActive( bool isActive );
+		void setMasterIsMuted( bool isMuted );
+		void setStripIsMuted( int nStrip, bool isMuted );
+		void setStripIsSoloed( int nStrip, bool isSoloed );
+		
+		void initExternalControlInterfaces();
+		void handleOutgoingControlChange( int param, int value, int channel);
 };
 
-};
-
+}
 #endif
-
