@@ -257,6 +257,7 @@ PreferencesDialog::PreferencesDialog(QWidget* parent)
 
 	//OSC tab
 	enableOscCheckbox->setChecked( pPref->getOscServerEnabled() );
+	enableOscFeedbackCheckbox->setChecked( pPref->getOscFeedbackEnabled() );
 	connect(enableOscCheckbox, SIGNAL(toggled(bool)), this, SLOT(toggleOscCheckBox( bool )));
 	
 	incomingOscPortSpinBox->setValue( pPref->getOscServerPort() );
@@ -282,6 +283,7 @@ PreferencesDialog::PreferencesDialog(QWidget* parent)
 	sBstartOffset->setValue( pPref->m_startOffset );
 
 	sBmaxBars->setValue( pPref->getMaxBars() );
+	sBmaxLayers->setValue( pPref->getMaxLayers() );
 
 	QString pathtoRubberband = pPref->m_rubberBandCLIexecutable;
 
@@ -450,6 +452,7 @@ void PreferencesDialog::on_okBtn_clicked()
 
 	//OSC tab
 	pPref->setOscServerEnabled( enableOscCheckbox->isChecked() );
+	pPref->setOscFeedbackEnabled( enableOscFeedbackCheckbox->isChecked() );
 	pPref->setOscServerPort( incomingOscPortSpinBox->value() );
 	
 	// General tab
@@ -470,6 +473,7 @@ void PreferencesDialog::on_okBtn_clicked()
 	pPref->m_startOffset = sBstartOffset->value();
 
 	pPref->setMaxBars( sBmaxBars->value() );
+	pPref->setMaxLayers( sBmaxLayers->value() );
 
 	Hydrogen::get_instance()->setBcOffsetAdjust();
 

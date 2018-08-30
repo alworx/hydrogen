@@ -19,7 +19,7 @@ PROJECT(hydrogen)
 SET(VERSION_MAJOR "1")
 SET(VERSION_MINOR "0")
 SET(VERSION_PATCH "0")
-#SET(VERSION_SUFFIX "rc1")
+SET(VERSION_SUFFIX "beta1")
 
 SET(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
@@ -63,14 +63,13 @@ ELSE()
 ENDIF()
 
 IF(MINGW)
-	OPTION(WANT_JACK         "Include JACK (Jack Audio Connection Kit) support" ON)
 	OPTION(WANT_PORTAUDIO    "Include PortAudio support" ON)
 	OPTION(WANT_PORTMIDI     "Include PortMidi support" ON)
 ELSE()
-	OPTION(WANT_JACK         "Include JACK (Jack Audio Connection Kit) support" ON)
 	OPTION(WANT_PORTAUDIO    "Include PortAudio support" OFF)
 	OPTION(WANT_PORTMIDI     "Include PortMidi support" OFF)
 ENDIF()
+OPTION(WANT_JACK         "Include JACK (Jack Audio Connection Kit) support" ON)
 OPTION(WANT_PULSEAUDIO   "Include PulseAudio support" ON)
 OPTION(WANT_LASH         "Include LASH (Linux Audio Session Handler) support" OFF)
 OPTION(WANT_LRDF         "Include LRDF (Lightweight Resource Description Framework with special support for LADSPA plugins) support" OFF)
@@ -129,39 +128,40 @@ INCLUDE(StatusSupportOptions)
 MANDATORY_PKG(Threads)
 MANDATORY_PKG(LIBSNDFILE)
 
+# http://doc.qt.io/qt-5/cmake-manual.html
 FIND_PACKAGE(Qt5Widgets REQUIRED)
 FIND_PACKAGE(Qt5Xml REQUIRED)
 FIND_PACKAGE(Qt5XmlPatterns REQUIRED)
+FIND_PACKAGE(Qt5LinguistTools REQUIRED)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
 
-IF(MINGW)
-    SET(WANT_JACK TRUE)
-    SET(Threads_PATH "C:/Program Files/GnuWin32")
-    SET(LIBARCHIVE_PATH "C:/Program Files/GnuWin32")
-    SET(LIBSNDFILE_PATH "C:/Program Files/Mega-Nerd/libsndfile")
-ELSE(MINGW)
-    IF(APPLE)
-		INCLUDE_DIRECTORIES("/opt/local/include")
-        LINK_DIRECTORIES("/opt/local/lib")
 
-		#Without setting this, installation would go into /usr/local, which does not exist per default
-		SET(CMAKE_INSTALL_PREFIX "/usr" )
-    ELSE(APPLE)
-        SET(OSS_LIB_PATHS "/usr/lib${LIB_SUFFIX}/oss/lib" "/usr/local/lib${LIB_SUFFIX}/oss/lib" )
-        SET(RUBBERBAND_INCLUDE_PATHS "/usr/include/rubberband" )
-    ENDIF(APPLE)
-ENDIF(MINGW)
+IF(APPLE)
+    INCLUDE_DIRECTORIES("/opt/local/include")
+    LINK_DIRECTORIES("/opt/local/lib")
+
+    #Without setting this, installation would go into /usr/local, which does not exist per default
+    SET(CMAKE_INSTALL_PREFIX "/usr" )
+ELSE(APPLE)
+    SET(OSS_LIB_PATHS "/usr/lib${LIB_SUFFIX}/oss/lib" "/usr/local/lib${LIB_SUFFIX}/oss/lib" )
+ENDIF(APPLE)
+
 
 #Installation paths
 # TODO remove data from path
-SET(SYS_DATA_PATH "${CMAKE_INSTALL_PREFIX}/share/hydrogen/data")
+SET(H2_SYS_PATH "${CMAKE_INSTALL_PREFIX}/share/hydrogen")
 # TODO remove data from path, could be .config/hydrogen
-SET(USR_DATA_PATH ".hydrogen/data")
+SET(H2_USR_PATH ".hydrogen")
 
+#Changing this to user writable location will allow successful, non-root, deployment (e.g: make install).
+IF(NOT MINGW AND NOT APPLE)
+    SET(H2_UNIX_ICON_PATH "/usr/share/pixmaps" CACHE STRING "Freedesktop default icon path.")
+ENDIF()
 
 SET(MAX_INSTRUMENTS 1000 CACHE STRING "Maximum number of instruments")
 SET(MAX_COMPONENTS  32   CACHE STRING "Maximum number of components")
 SET(MAX_NOTES       192  CACHE STRING "Maximum number of notes")
-SET(MAX_LAYERS      16   CACHE STRING "Maximum number of layers")
 SET(MAX_FX          4    CACHE STRING "Maximum number of effects")
 SET(MAX_BUFFER_SIZE 8192 CACHE STRING "Maximum size of buffer")
 
@@ -220,11 +220,11 @@ IF(APPLE)
 ENDIF()
 FIND_HELPER(PORTAUDIO portaudio-2.0 portaudio.h portaudio)
 FIND_HELPER(PORTMIDI portmidi portmidi.h portmidi)
-FIND_HELPER(PULSEAUDIO pulseaudio pulse/pulseaudio.h pulse)
+FIND_HELPER(PULSEAUDIO libpulse pulse/pulseaudio.h pulse)
 FIND_HELPER(LASH lash-1.0 lash/lash.h lash)
-FIND_HELPER(LRDF lrdf lrdf/lrdf.h lrdf)
+FIND_HELPER(LRDF lrdf lrdf.h lrdf)
 
-FIND_HELPER(RUBBERBAND rubberband RubberBandStretcher.h rubberband)
+FIND_HELPER(RUBBERBAND rubberband rubberband/RubberBandStretcher.h rubberband)
 FIND_HELPER(CPPUNIT cppunit cppunit/TestCase.h cppunit)
 
 
@@ -237,17 +237,20 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
 	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+	add_custom_target(doc_dir ALL COMMAND ${CMAKE_COMMAND}
+		-E make_directory ${CMAKE_CURRENT_BINARY_DIR}/docs)
 	add_custom_target(doc
 		${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs
-		COMMENT "Generating API documentation with Doxygen" VERBATIM
-		)
+		DEPENDS doc_dir
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs
+		COMMENT "Generating API documentation with Doxygen"
+		VERBATIM)
 endif(DOXYGEN_FOUND)
 
 #
 # COMPUTE H2CORE_HAVE_xxx xxx_STATUS_REPORT
 #
-SET(STATUS_LIST LIBSNDFILE LIBTAR LIBARCHIVE LADSPA ALSA OSS JACK JACKSESSION OSC COREAUDIO COREMIDI PORTAUDIO PORTMIDI PULSEAUDIO LASH LRDF RAPTOR RUBBERBAND CPPUNIT )
+SET(STATUS_LIST LIBSNDFILE LIBTAR LIBARCHIVE LADSPA ALSA OSS JACK JACKSESSION OSC COREAUDIO COREMIDI PORTAUDIO PORTMIDI PULSEAUDIO LASH LRDF RUBBERBAND CPPUNIT )
 FOREACH( _pkg ${STATUS_LIST})
     COMPUTE_PKGS_FLAGS(${_pkg})
 ENDFOREACH()
@@ -278,8 +281,8 @@ SET(cyan "${_escape}[1;36m")
 COLOR_MESSAGE("${cyan}Installation Summary${reset}
 --------------------
 * Install Directory            : ${CMAKE_INSTALL_PREFIX}
-* User data path               : ${USR_DATA_PATH}
-* System data path             : ${SYS_DATA_PATH}
+* User path                    : ${H2_USR_PATH}
+* System path                  : ${H2_SYS_PATH}
 * core library build as        : ${H2CORE_LIBRARY_TYPE}
 * debug capabilities           : ${H2CORE_HAVE_DEBUG}
 * macosx bundle                : ${H2CORE_HAVE_BUNDLE}
@@ -301,7 +304,7 @@ COLOR_MESSAGE("${cyan}Supported audio interfaces${reset}
 * ${purple}OSS${reset}                          : ${OSS_STATUS}
 * ${purple}JACK${reset}                         : ${JACK_STATUS}
 * ${purple}JACKSESSION${reset}                  : ${JACKSESSION_STATUS}
-* ${purple}OSC${reset}                  : ${OSC_STATUS}
+* ${purple}OSC${reset}                          : ${OSC_STATUS}
 * ${purple}CoreAudio${reset}                    : ${COREAUDIO_STATUS}
 * ${purple}CoreMidi${reset}                     : ${COREMIDI_STATUS}
 * ${purple}PortAudio${reset}                    : ${PORTAUDIO_STATUS}
@@ -313,7 +316,6 @@ COLOR_MESSAGE("${cyan}Usefull extensions${reset}
 -----------------------------------------
 * ${purple}LASH${reset}                         : ${LASH_STATUS}
 * ${purple}LRDF${reset}                         : ${LRDF_STATUS}
-* ${purple}RAPTOR${reset}                       : ${RAPTOR_STATUS}
 * ${purple}RUBBERBAND${reset}                   : ${RUBBERBAND_STATUS}
 *                                ${LIBRUBBERBAND_MSG}\n"
 )
@@ -351,18 +353,22 @@ ADD_SUBDIRECTORY(src/core)
 IF(H2CORE_HAVE_CPPUNIT)
     ADD_SUBDIRECTORY(src/tests)
 ENDIF()
+ADD_SUBDIRECTORY(data/i18n)
 ADD_SUBDIRECTORY(src/cli)
 ADD_SUBDIRECTORY(src/player)
 ADD_SUBDIRECTORY(src/gui)
+IF(EXISTS ${CMAKE_SOURCE_DIR}/data/doc/CMakeLists.txt)
+	ADD_SUBDIRECTORY(data/doc)
+ENDIF()
 IF (MINGW)
-	INSTALL(DIRECTORY data DESTINATION . PATTERN ".git" EXCLUDE)
+	INSTALL(DIRECTORY data DESTINATION . PATTERN ".git" EXCLUDE PATTERN "i18n" EXCLUDE PATTERN doc EXCLUDE)
 ELSE()
-	INSTALL(DIRECTORY data DESTINATION ${SYS_DATA_PATH}/.. PATTERN ".git" EXCLUDE)
+	INSTALL(DIRECTORY data DESTINATION ${H2_SYS_PATH} PATTERN ".git" EXCLUDE PATTERN "i18n" EXCLUDE PATTERN doc EXCLUDE)
 ENDIF()
 IF(NOT MINGW AND NOT APPLE)
 	INSTALL(FILES ${CMAKE_SOURCE_DIR}/linux/hydrogen.appdata.xml DESTINATION "${CMAKE_INSTALL_PREFIX}/share/appdata")
 	INSTALL(FILES ${CMAKE_SOURCE_DIR}/linux/hydrogen.desktop DESTINATION "${CMAKE_INSTALL_PREFIX}/share/applications")
-	INSTALL(FILES ${CMAKE_SOURCE_DIR}/data/img/gray/h2-icon.svg DESTINATION "/usr/share/pixmaps")
+	INSTALL(FILES ${CMAKE_SOURCE_DIR}/data/img/gray/h2-icon.svg DESTINATION "${H2_UNIX_ICON_PATH}")
 	INSTALL(FILES ${CMAKE_SOURCE_DIR}/linux/hydrogen.1 DESTINATION "${CMAKE_INSTALL_PREFIX}/man/man1")
 ENDIF()
 

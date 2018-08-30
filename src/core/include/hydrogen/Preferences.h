@@ -157,10 +157,6 @@ public:
 			UI_LAYOUT_TABBED
 	};
 
-
-	QString				m_sPreferencesFilename;
-	QString				m_sPreferencesDirectory;
-
 	QString				__lastspatternDirectory;
 	QString				__lastsampleDirectory; // audio file browser
 	bool				__playsamplesonclicking; // audio file browser
@@ -213,6 +209,7 @@ public:
 	
 	// OSC Server properties
 	bool				m_bOscServerEnabled;
+	bool				m_bOscFeedbackEnabled;
 	int					m_nOscServerPort;
 
 	//	alsa audio driver properties ___
@@ -247,9 +244,7 @@ public:
 	/// Save the preferences file
 	void				savePreferences();
 
-	const QString&		getDemoPath();
 	const QString&		getDataDirectory();
-	const QString&		getTmpDirectory();
 
 	const QString&		getDefaultEditor();
 	void				setDefaultEditor( QString editor);
@@ -301,9 +296,6 @@ public:
 
 	QStringList			getRecentFX();
 	void				setMostRecentFX( QString );
-
-	std::vector<QString> getLadspaPath();
-	void				setLadspaPath( std::vector<QString> pathVect );
 
 
 	// GUI Properties
@@ -378,6 +370,9 @@ public:
 	void				setMaxBars( int bars );
 	int					getMaxBars();
 
+	void				setMaxLayers( int layers );
+	int					getMaxLayers();
+
 	void				setWaitForSessionHandler(bool value);
 	bool				getWaitForSessionHandler();
 
@@ -400,7 +395,10 @@ public:
 
 	bool				getOscServerEnabled();
 	void				setOscServerEnabled( bool val );
-
+	
+	bool				getOscFeedbackEnabled();
+	void				setOscFeedbackEnabled( bool val );
+	
 	int					getOscServerPort();
 	void				setOscServerPort( int oscPort );
 
@@ -439,12 +437,6 @@ public:
 private:
 	static Preferences *	__instance;
 	
-	QString				m_sDataDirectory;
-	QString				m_sTmpDirectory;
-
-	/** directory of demo songs */
-	QString				demoPath;
-
 	//___ General properties ___
 	QString				m_sH2ProcessName; //Name of hydrogen's main process
 	int					__rubberBandCalcTime;
@@ -464,11 +456,11 @@ private:
 	int					punchInPos;
 	int					punchOutPos;
 	int					maxBars;
+	int					maxLayers;
 	bool				hearNewNotes;
 
 	QStringList			m_recentFX;
 	std::vector<QString> m_recentFiles;
-	std::vector<QString> m_ladspaPathVect;
 
 #ifdef H2CORE_HAVE_JACKSESSION
 		QString			jackSessionUUID;
@@ -522,18 +514,9 @@ private:
 	int					m_nExportSampleRate;
 	int					m_nExportSampleDepth;
 	int					m_nExportTemplate;
-	//~ Export dialog 
+	//~ Export dialog
 	
 	Preferences();
-
-	/// Create preferences directory
-	void createPreferencesDirectory();
-
-	/// Create data directory
-	void createDataDirectory();
-
-	/// Create soundLibrary directory
-	void createSoundLibraryDirectories();
 
 	WindowProperties readWindowProperties( QDomNode parent, const QString& windowName, WindowProperties defaultProp );
 	void writeWindowProperties( QDomNode parent, const QString& windowName, const WindowProperties& prop );
@@ -591,17 +574,6 @@ inline int Preferences::getExportTemplate() const
 inline void Preferences::setExportTemplate(int ExportTemplate)
 {
 	m_nExportTemplate = ExportTemplate;
-}
-
-inline const QString& Preferences::getDemoPath() {
-	return demoPath;
-}
-inline const QString& Preferences::getDataDirectory(){
-	return m_sDataDirectory;
-}
-
-inline const QString& Preferences::getTmpDirectory(){
-	return m_sTmpDirectory;
 }
 
 inline const QString& Preferences::getDefaultEditor() {
@@ -731,13 +703,6 @@ inline std::vector<QString> Preferences::getRecentFiles() {
 
 inline QStringList Preferences::getRecentFX() {
 	return m_recentFX;
-}
-
-inline std::vector<QString> Preferences::getLadspaPath() {
-	return m_ladspaPathVect;
-}
-inline void Preferences::setLadspaPath( std::vector<QString> pathVect ) {
-	m_ladspaPathVect = pathVect;
 }
 
 
@@ -917,6 +882,14 @@ inline int Preferences::getMaxBars(){
 	return maxBars;
 }
 
+inline void Preferences::setMaxLayers( int layers ){
+	maxLayers = layers;
+}
+
+inline int Preferences::getMaxLayers(){
+	return maxLayers;
+}
+
 inline void Preferences::setWaitForSessionHandler(bool value){
 	waitingForSessionHandler = value;
 }
@@ -970,6 +943,13 @@ inline bool Preferences::getOscServerEnabled(){
 
 inline void Preferences::setOscServerEnabled( bool val ){
 	m_bOscServerEnabled = val;
+}
+inline bool Preferences::getOscFeedbackEnabled(){
+	return m_bOscFeedbackEnabled;
+}
+
+inline void Preferences::setOscFeedbackEnabled( bool val ){
+	m_bOscFeedbackEnabled = val;
 }
 
 inline int Preferences::getOscServerPort(){

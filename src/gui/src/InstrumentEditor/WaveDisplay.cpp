@@ -34,6 +34,7 @@ const char* WaveDisplay::__class_name = "WaveDisplay";
 WaveDisplay::WaveDisplay(QWidget* pParent)
  : QWidget( pParent )
  , Object( __class_name )
+ , m_nCurrentWidth( 0 )
  , m_sSampleName( "" )
 {
 	setAttribute(Qt::WA_NoBackground);
@@ -46,7 +47,7 @@ WaveDisplay::WaveDisplay(QWidget* pParent)
 	}
 
 	m_pLayer = 0;
-	m_pPeakData = new int[ width() ];
+	m_pPeakData = new int[ width() ]{};
 }
 
 
@@ -73,15 +74,16 @@ void WaveDisplay::paintEvent(QPaintEvent *ev)
 	painter.setBrush(brush);
 	painter.drawRect(0, 0, width(), height());
 	
-	
-	
-	painter.setPen( QColor( 102, 150, 205 ) );
-	int VCenter = height() / 2;
-	for ( int x = 0; x < width(); x++ ) {
-		painter.drawLine( x, VCenter, x, m_pPeakData[x] + VCenter );
-		painter.drawLine( x, VCenter, x, -m_pPeakData[x] + VCenter );
+	if( m_pLayer ){
+		painter.setPen( QColor( 102, 150, 205 ) );
+		int VCenter = height() / 2;
+		for ( int x = 0; x < width(); x++ ) {
+			painter.drawLine( x, VCenter, x, m_pPeakData[x] + VCenter );
+			painter.drawLine( x, VCenter, x, -m_pPeakData[x] + VCenter );
+		}
+		
 	}
-
+	
 	QFont font;
 	font.setWeight( 63 );
 	painter.setFont( font );
@@ -120,7 +122,7 @@ void WaveDisplay::updateDisplay( H2Core::InstrumentLayer *pLayer )
 //		INFOLOG( "[updateDisplay] sample: " + m_sSampleName  );
 
 		int nSampleLength = pLayer->get_sample()->get_frames();
-		float nScaleFactor = nSampleLength / m_nCurrentWidth;
+		int nScaleFactor = nSampleLength / m_nCurrentWidth;
 
 		float fGain = height() / 2.0 * pLayer->get_gain();
 
